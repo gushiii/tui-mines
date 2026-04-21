@@ -26,14 +26,14 @@
 
 ### 2. 快速启动
 
-# 克隆仓库
+#### 克隆仓库
 ```shell
-git clone https://github.com/gushiii/rcli.git
+git clone https://github.com/gushiii/tui-mines.git
 cd tui-mines
 ```
-# 运行游戏
+#### 运行游戏
 ```shell
-cargo run --release
+cargo run
 ```
 
 ## 🎮 操作说明
@@ -48,6 +48,15 @@ cargo run --release
 | 任意键 | 游戏结束后重新开始 |
 
 ## 📁 项目结构
+```tree
+tui-mines/
+├── Cargo.toml
+└── src/
+    ├── main.rs          # 程序入口 (Controller 逻辑)
+    ├── model.rs         # 游戏逻辑与数据结构 (Model)
+    └── view.rs          # 界面渲染逻辑 (View)
+
+```
 
 * Model: 处理棋盘生成、洗牌埋雷算法、递归翻开逻辑及排行榜 I/O。
 * View: 基于 ratatui 的 Table 和 Paragraph 实现的彩色渲染层。
