@@ -1,0 +1,4 @@
+/target
+score.json
+.DS_Store
+Cargo.lock

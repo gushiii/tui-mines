@@ -1,0 +1,29 @@
+{
+  "scores": [
+    {
+      "date": "2026-04-21 13:40",
+      "seconds": 117,
+      "difficulty": "10x10"
+    },
+    {
+      "date": "2026-04-21 13:10",
+      "seconds": 136,
+      "difficulty": "10x10"
+    },
+    {
+      "date": "2026-04-21 13:18",
+      "seconds": 138,
+      "difficulty": "10x10"
+    },
+    {
+      "date": "2026-04-21 14:47",
+      "seconds": 145,
+      "difficulty": "10x10"
+    },
+    {
+      "date": "2026-04-21 13:30",
+      "seconds": 200,
+      "difficulty": "10x10"
+    }
+  ]
+}
