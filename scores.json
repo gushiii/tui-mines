@@ -1,9 +1,69 @@
 {
   "scores": [
     {
-      "date": "2026-05-03 12:42",
-      "seconds": 110,
+      "date": "2026-05-03 14:55",
+      "seconds": 1,
       "difficulty": "10x10"
+    },
+    {
+      "date": "2026-05-03 14:56",
+      "seconds": 2,
+      "difficulty": "10x10"
+    },
+    {
+      "date": "2026-05-03 14:55",
+      "seconds": 3,
+      "difficulty": "10x10"
+    },
+    {
+      "date": "2026-05-03 14:55",
+      "seconds": 4,
+      "difficulty": "10x10"
+    },
+    {
+      "date": "2026-05-03 14:55",
+      "seconds": 0,
+      "difficulty": "30x16"
+    },
+    {
+      "date": "2026-05-03 14:55",
+      "seconds": 0,
+      "difficulty": "30x16"
+    },
+    {
+      "date": "2026-05-03 14:55",
+      "seconds": 0,
+      "difficulty": "30x16"
+    },
+    {
+      "date": "2026-05-03 14:55",
+      "seconds": 4,
+      "difficulty": "30x16"
+    },
+    {
+      "date": "2026-05-03 14:55",
+      "seconds": 0,
+      "difficulty": "16x16"
+    },
+    {
+      "date": "2026-05-03 14:55",
+      "seconds": 0,
+      "difficulty": "16x16"
+    },
+    {
+      "date": "2026-05-03 14:55",
+      "seconds": 0,
+      "difficulty": "16x16"
+    },
+    {
+      "date": "2026-05-03 14:55",
+      "seconds": 0,
+      "difficulty": "16x16"
+    },
+    {
+      "date": "2026-05-03 14:55",
+      "seconds": 0,
+      "difficulty": "16x16"
     }
   ]
 }

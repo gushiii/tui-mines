@@ -109,7 +109,6 @@ impl MinesweeperView {
             })
             .collect();
 
-        // let remaining = model.remaining_mines();
         let time_info = format!(
             " \u{f13ab}: {:02}:{:02} ",
             model.elapsed_time / 60,
@@ -135,7 +134,7 @@ impl MinesweeperView {
 
         let widths = vec![Constraint::Length(3); model.grid[0].len()];
         let table = Table::new(rows, widths)
-            .block(Block::bordered()) // 标题简短
+            .block(Block::bordered())
             .column_spacing(0);
         f.render_widget(table, board_area);
 
@@ -149,8 +148,17 @@ impl MinesweeperView {
             let screen_area = f.area();
 
             let text = if model.won {
+                let current_difficulty = format!("{}x{}", model.width, model.height);
                 let mut top_scores = "\u{f091} TOP SCORES \u{f091}\n".to_string();
-                for (i, s) in model.leaderboard.scores.iter().take(3).enumerate() {
+                // 取当前难度前 3 个成绩展示
+                let difficulty_scores: Vec<_> = model
+                    .leaderboard
+                    .scores
+                    .iter()
+                    .filter(|s| s.difficulty == current_difficulty)
+                    .take(3)
+                    .collect();
+                for (i, s) in difficulty_scores.iter().enumerate() {
                     top_scores.push_str(&format!("{}. {}s - {}\n", i + 1, s.seconds, s.date));
                 }
                 format!(
@@ -163,9 +171,7 @@ impl MinesweeperView {
                 "\u{f0691} GAME OVER \u{f0691}\nPress any key to restart".to_string()
             };
 
-            // 2. 核心修复：显式借用为 &str
             let popup_area = Self::get_adaptive_rect(&text, screen_area);
-
             let popup = Paragraph::new(text).alignment(Alignment::Center).block(
                 Block::bordered()
                     .title(" Result ")

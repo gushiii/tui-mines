@@ -38,11 +38,31 @@ impl Leaderboard {
         self.scores.push(Score {
             date,
             seconds,
-            difficulty,
+            difficulty: difficulty.clone(),
         });
-        // 按时间排序，只保留前 10 名
-        self.scores.sort_by_key(|s| s.seconds);
-        self.scores.truncate(10);
+        
+        // 按难度分组，每种难度只保留前 10 名
+        let mut grouped: std::collections::HashMap<String, Vec<Score>> = 
+            std::collections::HashMap::new();
+        
+        for score in self.scores.drain(..) {
+            grouped
+                .entry(score.difficulty.clone())
+                .or_default()
+                .push(score);
+        }
+        
+        // 对每个难度的成绩按时间排序，只保留前 10 名
+        for scores in grouped.values_mut() {
+            scores.sort_by_key(|s| s.seconds);
+            scores.truncate(10);
+        }
+        
+        // 重新合并所有成绩
+        for scores in grouped.into_values() {
+            self.scores.extend(scores);
+        }
+        
         self.save();
     }
 }
