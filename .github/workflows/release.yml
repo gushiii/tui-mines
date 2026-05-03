@@ -52,8 +52,11 @@ jobs:
         if: matrix.use_cross
         run: |
           # 直接下载预编译二进制，避免 cargo install 404 或超时
-          curl -L https://github.com | tar xz
+          # 使用 -L 处理重定向，-o 先保存为文件再解压
+          curl -L -o cross.tar.gz https://github.com
+          tar -xzf cross.tar.gz
           sudo mv cross /usr/local/bin/
+          rm cross.tar.gz
 
       - name: Build Binary
         shell: bash
