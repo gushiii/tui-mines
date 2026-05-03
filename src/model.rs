@@ -22,10 +22,6 @@ pub struct Leaderboard {
 
 impl Leaderboard {
     pub fn load() -> Self {
-        // fs::read_to_string("scores.json")
-        //     .and_then(|content| Ok(serde_json::from_str(&content).unwrap_or_default()))
-        //     .unwrap_or_default()
-
         fs::read_to_string("scores.json")
             .map(|content| serde_json::from_str(&content).unwrap_or_default())
             .unwrap_or_default()
