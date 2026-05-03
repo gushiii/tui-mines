@@ -19,6 +19,11 @@ fn get_centered_rect(width: u16, height: u16, area: Rect) -> Rect {
 }
 
 impl MinesweeperView {
+    const CLOSED_CELL: &'static str = " \u{f0764} ";
+    const FLAGGED_CELL: &'static str = " \u{f024}";
+    const MINE_CELL: &'static str = " \u{f0691}";
+    const EMPTY_CELL: &'static str = " . ";
+
     // 辅助函数：根据文本内容计算居中且自适应大小的矩形
     fn get_adaptive_rect(text: &str, screen: Rect) -> Rect {
         let lines: Vec<&str> = text.lines().collect();
@@ -66,16 +71,16 @@ impl MinesweeperView {
                         // 获取内容和基本样式
                         let (content, color) = match cell.state {
                             CellState::Closed => {
-                                (" \u{f0764} ".to_string(), Color::Rgb(100, 100, 100))
+                                (Self::CLOSED_CELL.to_string(), Color::Rgb(100, 100, 100))
                             }
                             CellState::Flagged => {
-                                (" \u{f024}".to_string(), Color::Rgb(255, 80, 80))
+                                (Self::FLAGGED_CELL.to_string(), Color::Rgb(255, 80, 80))
                             }
                             CellState::Opened => {
                                 if cell.is_mine {
-                                    (" \u{f0691}".to_string(), Color::Rgb(255, 0, 0))
+                                    (Self::MINE_CELL.to_string(), Color::Rgb(255, 0, 0))
                                 } else if cell.neighbor_mines == 0 {
-                                    (" . ".to_string(), Color::Rgb(80, 80, 80))
+                                    (Self::EMPTY_CELL.to_string(), Color::Rgb(80, 80, 80))
                                 } else {
                                     let c = match cell.neighbor_mines {
                                         1 => Color::Rgb(100, 150, 255),
@@ -91,14 +96,11 @@ impl MinesweeperView {
 
                         let mut style = Style::default().fg(color);
                         if is_cursor {
-                            // 光标中心：保持之前的醒目黄色
                             style = style.bg(Color::Yellow).fg(Color::Black).bold();
                         } else if is_neighbor {
-                            // 辅助框范围：设置一个淡淡的背景色或改变边框感
                             style = style.bg(Color::Rgb(60, 60, 60));
                         }
 
-                        // 返回 ratatui 的 Cell
                         ratatui::widgets::Cell::from(content).style(style)
                     })
                     .collect();

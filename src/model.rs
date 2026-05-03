@@ -22,8 +22,12 @@ pub struct Leaderboard {
 
 impl Leaderboard {
     pub fn load() -> Self {
+        // fs::read_to_string("scores.json")
+        //     .and_then(|content| Ok(serde_json::from_str(&content).unwrap_or_default()))
+        //     .unwrap_or_default()
+
         fs::read_to_string("scores.json")
-            .and_then(|content| Ok(serde_json::from_str(&content).unwrap_or_default()))
+            .map(|content| serde_json::from_str(&content).unwrap_or_default())
             .unwrap_or_default()
     }
 
@@ -69,6 +73,9 @@ pub struct MinesweeperModel {
     pub width: usize,
     pub height: usize,
     pub mine_count: usize,
+    pub flags: usize,
+    pub opened_safe_cells: usize,
+    pub safe_cells: usize,
     pub first_click: bool,
     pub start_time: Option<Instant>,
     pub elapsed_time: u64,
@@ -94,6 +101,7 @@ impl MinesweeperModel {
             })
             .collect();
 
+        let safe_cells = width * height - mine_count;
         Self {
             grid,
             cursor: (0, 0),
@@ -103,6 +111,9 @@ impl MinesweeperModel {
             width,
             height,
             mine_count,
+            flags: 0,
+            opened_safe_cells: 0,
+            safe_cells,
             first_click: true,
             start_time: None,
             elapsed_time: 0,
@@ -140,8 +151,8 @@ impl MinesweeperModel {
             pos.swap(i, j);
         }
 
-        for i in 0..self.mine_count.min(pos.len()) {
-            let (px, py) = pos[i];
+        for mine in pos.iter().take(self.mine_count.min(pos.len())) {
+            let (px, py) = *mine;
             self.grid[py][px].is_mine = true;
         }
 
@@ -164,10 +175,9 @@ impl MinesweeperModel {
                             && ny < self.height as isize
                             && nx >= 0
                             && nx < self.width as isize
+                            && self.grid[ny as usize][nx as usize].is_mine
                         {
-                            if self.grid[ny as usize][nx as usize].is_mine {
-                                count += 1;
-                            }
+                            count += 1;
                         }
                     }
                 }
@@ -229,10 +239,13 @@ impl MinesweeperModel {
             for dx in -1..=1 {
                 let nx = x as isize + dx;
                 let ny = y as isize + dy;
-                if nx >= 0 && ny >= 0 && nx < self.width as isize && ny < self.height as isize {
-                    if self.grid[ny as usize][nx as usize].state == CellState::Flagged {
-                        flags += 1;
-                    }
+                if nx >= 0
+                    && ny >= 0
+                    && nx < self.width as isize
+                    && ny < self.height as isize
+                    && self.grid[ny as usize][nx as usize].state == CellState::Flagged
+                {
+                    flags += 1;
                 }
             }
         }
@@ -268,20 +281,31 @@ impl MinesweeperModel {
     }
 
     // 更新已用时间
-    pub fn update_timer(&mut self) {
-        if let Some(start) = self.start_time {
-            if !self.game_over && !self.won {
-                self.elapsed_time = start.elapsed().as_secs();
+    pub fn update_timer(&mut self) -> bool {
+        if let Some(start) = self.start_time
+            && !self.game_over
+            && !self.won
+        {
+            let seconds = start.elapsed().as_secs();
+            if seconds != self.elapsed_time {
+                self.elapsed_time = seconds;
+                return true;
             }
         }
+
+        false
     }
 
     fn recursive_open(&mut self, x: usize, y: usize) {
         if x >= self.width || y >= self.height || self.grid[y][x].state != CellState::Closed {
             return;
         }
-        self.grid[y][x].state = CellState::Opened;
-        if self.grid[y][x].neighbor_mines == 0 && !self.grid[y][x].is_mine {
+        let cell = &mut self.grid[y][x];
+        cell.state = CellState::Opened;
+        if !cell.is_mine {
+            self.opened_safe_cells += 1;
+        }
+        if cell.neighbor_mines == 0 && !cell.is_mine {
             for dy in -1..=1 {
                 for dx in -1..=1 {
                     let nx = x as isize + dx;
@@ -295,18 +319,19 @@ impl MinesweeperModel {
     }
 
     pub fn toggle_flag(&mut self) {
-        let current_flags = self.flags_count();
         let (x, y) = self.cursor;
         let cell = &mut self.grid[y][x];
         match cell.state {
             CellState::Closed => {
-                if current_flags < self.mine_count {
+                if self.flags < self.mine_count {
                     cell.state = CellState::Flagged;
+                    self.flags += 1;
                     Self::play_sound("flag");
                 }
             }
             CellState::Flagged => {
                 cell.state = CellState::Closed;
+                self.flags -= 1;
                 Self::play_sound("unflag");
             }
             _ => {}
@@ -322,12 +347,7 @@ impl MinesweeperModel {
     }
 
     fn check_win(&mut self) {
-        let all_safe_opened = self
-            .grid
-            .iter()
-            .flatten()
-            .all(|c| c.is_mine || c.state == CellState::Opened);
-        if all_safe_opened && !self.won {
+        if self.opened_safe_cells == self.safe_cells && !self.won {
             self.won = true;
             Self::play_sound("win");
             // 获胜时记录成绩
@@ -337,11 +357,7 @@ impl MinesweeperModel {
     }
 
     pub fn flags_count(&self) -> usize {
-        self.grid
-            .iter()
-            .flatten()
-            .filter(|c| c.state == CellState::Flagged)
-            .count()
+        self.flags
     }
 
     // 播放音效辅助函数

@@ -5,6 +5,7 @@ use crossterm::{
 };
 use ratatui::prelude::*;
 use std::io::{self, stdout};
+use std::time::{Duration, Instant};
 
 use crate::{
     model::{CellState, MinesweeperModel},
@@ -27,51 +28,68 @@ fn main() -> io::Result<()> {
     let mut terminal = Terminal::new(CrosstermBackend::new(stdout()))?;
 
     let mut model = MinesweeperModel::new_with_difficulty(EASY.0, EASY.1, EASY.2);
+    let tick_rate = Duration::from_secs(1);
+    let mut last_tick = Instant::now();
+    let mut needs_draw = true;
 
     loop {
-        model.update_timer();
-        terminal.draw(|f| MinesweeperView::draw(f, &model))?;
+        let timeout = tick_rate
+            .checked_sub(last_tick.elapsed())
+            .unwrap_or_default();
 
-        if event::poll(std::time::Duration::from_millis(16))? {
-            if let Event::Key(key) = event::read()? {
-                // 如果游戏已结束
-                if model.game_over || model.won {
-                    match key.code {
-                        KeyCode::Char('q') => break, // 按 Q 依然退出
-                        _ => model.reset(),          // 按其他任意键重置游戏
-                    }
-                }
-                // 如果游戏正在进行中
-                else {
-                    match key.code {
-                        KeyCode::Char('q') => break,
-                        KeyCode::Char('1') => {
-                            model = MinesweeperModel::new_with_difficulty(EASY.0, EASY.1, EASY.2)
-                        }
-                        KeyCode::Char('2') => {
-                            model =
-                                MinesweeperModel::new_with_difficulty(MEDIUM.0, MEDIUM.1, MEDIUM.2)
-                        }
-                        KeyCode::Char('3') => {
-                            model = MinesweeperModel::new_with_difficulty(HARD.0, HARD.1, HARD.2)
-                        }
-                        KeyCode::Left => model.move_cursor(-1, 0),
-                        KeyCode::Right => model.move_cursor(1, 0),
-                        KeyCode::Up => model.move_cursor(0, -1),
-                        KeyCode::Down => model.move_cursor(0, 1),
-                        KeyCode::Char(' ') => {
-                            let (x, y) = model.cursor;
-                            if model.grid[y][x].state == CellState::Opened {
-                                model.chord_cell(); // 如果已翻开，尝试 Chording
-                            } else {
-                                model.open_cell(); // 如果未翻开，正常翻开
-                            }
-                        }
-                        KeyCode::Char('f') => model.toggle_flag(),
-                        _ => {}
-                    }
+        if event::poll(timeout)?
+            && let Event::Key(key) = event::read()?
+        {
+            needs_draw = true;
+
+            // 如果游戏已结束
+            if model.game_over || model.won {
+                match key.code {
+                    KeyCode::Char('q') => break, // 按 Q 依然退出
+                    _ => model.reset(),          // 按其他任意键重置游戏
                 }
             }
+            // 如果游戏正在进行中
+            else {
+                match key.code {
+                    KeyCode::Char('q') => break,
+                    KeyCode::Char('1') => {
+                        model = MinesweeperModel::new_with_difficulty(EASY.0, EASY.1, EASY.2)
+                    }
+                    KeyCode::Char('2') => {
+                        model = MinesweeperModel::new_with_difficulty(MEDIUM.0, MEDIUM.1, MEDIUM.2)
+                    }
+                    KeyCode::Char('3') => {
+                        model = MinesweeperModel::new_with_difficulty(HARD.0, HARD.1, HARD.2)
+                    }
+                    KeyCode::Left => model.move_cursor(-1, 0),
+                    KeyCode::Right => model.move_cursor(1, 0),
+                    KeyCode::Up => model.move_cursor(0, -1),
+                    KeyCode::Down => model.move_cursor(0, 1),
+                    KeyCode::Char(' ') => {
+                        let (x, y) = model.cursor;
+                        if model.grid[y][x].state == CellState::Opened {
+                            model.chord_cell(); // 如果已翻开，尝试 Chording
+                        } else {
+                            model.open_cell(); // 如果未翻开，正常翻开
+                        }
+                    }
+                    KeyCode::Char('f') => model.toggle_flag(),
+                    _ => {}
+                }
+            }
+        }
+
+        if last_tick.elapsed() >= tick_rate {
+            if model.update_timer() {
+                needs_draw = true;
+            }
+            last_tick = Instant::now();
+        }
+
+        if needs_draw {
+            terminal.draw(|f| MinesweeperView::draw(f, &model))?;
+            needs_draw = false;
         }
     }
 
